@@ -1,0 +1,35 @@
+{%- set constants = {
+  "container_name": "helm-chart-repo",
+  "image_name": "chartmuseum/chartmuseum",
+} %}
+
+{%- set config = salt["pillar.get"]('chartmuseum', {
+      "image_version": "latest",
+      "bind_ip": salt['network.interface_ip']('eth0'),
+      "bind_port": "80",
+      "data_dir": "/datavols/helm/chart-repo",
+      "data_volume": None,
+      "fqdn": None,
+      "public_url": None,
+      "debug": False,
+      "force_repackage": False,
+      "git": { 
+        "repos": []
+      },
+      "helm_home": "/root/.helm"
+    }, merge=True) 
+%}
+
+{%- if not config.get("public_url") %}
+{%- do config.update({
+      'public_url': "http://" + config['bind_ip'] + 
+                   ":" + config['bind_port'] 
+    })
+%}
+{%- endif %}
+
+{%- do constants.update({
+      "git_repos_dir": config.get("data_dir") + "/chart-definitions",
+      "public_repo_dir": config.get("data_dir") + "/public"
+    })
+%}

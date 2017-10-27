@@ -1,0 +1,58 @@
+chartmuseum:
+
+  #
+  # The ip address to which the docker container should bind.
+  #
+  bind_ip: 192.168.51.6
+
+  #
+  # The host port to which the docker container's Chartmuseum service should
+  # be exposed
+  #
+  # bind_port: 80
+
+  #
+  # The FQDN to apply to the docker container
+  #
+  fqdn: helm-chart-repo.dev.xetus.com
+
+  #
+  # Optional, but recommended: the externally-accessed chart base url that 
+  # should be supplied to Chartmuseum as the chart-url parameter.
+  #
+  # public_url: http://helm-chart-repo-1a.dev.xetus.com
+  
+  #
+  # Optional: Whether the Chartmuseum server should log at the debug level. 
+  # Defaults to False.
+  #
+  # debug: False
+
+  #
+  # Optional: Whether charts deployed to the server using the `packages_updated`
+  # state should be repackaged, regardless of whether any changes have been 
+  # detected with the chart definition.
+  # Defaults to False.
+  #
+  # force_repackage: False
+    
+  #
+  # The listing of git repositories that should be packaged into the
+  # chart repository. Each entry in the list should be an object with
+  # at least a `url` key that specifies the https URL for the git repository,
+  # and can additionally specify either a:
+  # 
+  #   1. `branch` key, which indicates which repository branch should be 
+  #   pulled from the git repo; and/or
+  #   2. `rev` key, which indicates the specific revision that should be
+  #   pulled from the git repo.
+  #   
+  # For more information on both, please see the 
+  # salt.states.git latest state to which those options are passed
+  # 
+  # (https://docs.saltstack.com/en/latest/ref/states/all/salt.states.git.html#salt.states.git.latest)
+  #
+  # git:
+  #  repos:
+  #    - path: /vagrant/k8s/charts/nfs-provisioner
+  #    - url: https://github.com/group/some-chart.git
