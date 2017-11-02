@@ -30,7 +30,9 @@ key, the target minion must additionally have:
       install: false
     #
     # any repositories that need to be available for installing chart 
-    # dependencies can be configured with the helm client here
+    # dependencies can be configured with the helm client here. When this is
+    # required, packaging the chart will fail with an error indicating a
+    # repository could not be reached.
     #
     repos:
       {{ repo_name }}: {{ repo_url }}
@@ -132,6 +134,13 @@ Running the tests:
 
   bundle
   kitchen test
+
+Be sure to destroy the test VMs when you're done testing to liberate your local
+development resources:
+
+.. code-block:: shell
+
+  kitchen destroy
 
 Development
 ===========

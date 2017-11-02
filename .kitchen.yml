@@ -1,0 +1,66 @@
+---
+driver:
+  name: vagrant
+  cpus: 2
+
+platforms:
+  - name: bento/ubuntu-16.04
+
+provisioner:
+  name: salt_solo
+  log_level: info
+  require_chef: false
+  formula: chartmuseum
+  salt_version: 2016.11.8
+  salt_bootstrap_options: -U -p python-git stable 2016.11.8
+  dependencies:
+    - name: pip
+      repo: git
+      source: https://github.com/xetus-oss/pip-formula.git
+    - name: docker
+      repo: git
+      source: https://github.com/saltstack-formulas/docker-formula.git
+    - name: helm
+      repo: git
+      source: https://github.com/tmeneau/salt-formula-helm.git
+  state_top:
+    base:
+      '*':
+        - helm
+        - pip.installed
+        - docker
+        - chartmuseum
+
+verifier:
+  name: inspec
+  sudo: true
+
+suites:
+  - name: chartmuseum
+    provisioner:
+      pillars:
+        top.sls:
+          base:
+            '*':
+              - chartmuseum
+              - helm
+              - docker
+        docker.sls:
+          docker:
+            install_docker_py: true
+        helm.sls:
+          helm:
+            tiller:
+              install: false
+            kubectl:
+              install: false
+        chartmuseum.sls:
+          chartmuseum:
+            bind_ip: 0.0.0.0
+            public_url: http://0.0.0.0
+            git:
+              repos:
+                - url: https://github.com/kubernetes/charts.git
+                  subpath: stable/mailhog
+                - url: https://github.com/kubernetes/charts.git
+                  subpath: stable/redmine
