@@ -38,14 +38,23 @@ chartmuseum:
     
   #
   # The listing of git repositories that should be packaged into the
-  # chart repository. Each entry in the list should be an object with
-  # at least a `url` key that specifies the https URL for the git repository,
-  # and can additionally specify either a:
+  # chart repository. 
+  #
+  # Each entry in the list can use one of the two sources for chart 
+  # repositories:
+  #
+  #   1. `url`; the url for a git repository accessible via HTTP; or
+  #   2. `path`; the path on the target minion's filesystem to the local git
+  #   repository.
+
+  # The `url` key supports a few additional options:
   # 
-  #   1. `branch` key, which indicates which repository branch should be 
-  #   pulled from the git repo; and/or
-  #   2. `rev` key, which indicates the specific revision that should be
-  #   pulled from the git repo.
+  #   * `branch`; the repository branch should be pulled from the git repo;
+  #   * `rev`; the specific revision that should be pulled from the git repo;
+  #   * `subpath`; the subpath within the git repository that contains the chart
+  #   definition. This is useful in cases where the chart definition is bundled
+  #   with an app's source repo, or in a chart bucket repository (like the 
+  #   kubernetes stable repository).
   #   
   # For more information on both, please see the 
   # salt.states.git latest state to which those options are passed
@@ -56,3 +65,5 @@ chartmuseum:
   #  repos:
   #    - path: /vagrant/k8s/charts/nfs-provisioner
   #    - url: https://github.com/group/some-chart.git
+  #    - url: https://github.com/kubernetes/charts.git
+  #      subpath: stable/redmine

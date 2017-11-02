@@ -77,16 +77,26 @@ def get_chart_definitions(charts_parent_dir):
   log.trace("loaded definitions: %s" % definitions)
   return definitions
 
-def get_repo_name(git_repo_path):
-  '''
-  Parse the git repository name from the repository url.
-
-  git_repo_path
-      The URL or local file path where the chart definition repository
-      is located
-  '''
-  repo_name_match = re.match(r'.*\/([^\/]*)', git_repo_path)
+def get_repo_coordinates(repo_source, target_base, subpath = None):
+  last_dir_matcher = r'.*\/([^\/]*)'
+  repo_name_match = re.match(last_dir_matcher, repo_source)
   if not repo_name_match:
-    return None
-  
-  return repo_name_match.group(1).replace(".git", "")
+    return {}
+
+  repo_name = repo_name_match.group(1).replace(".git", "")
+  chart_name = repo_name
+  if subpath:
+    chart_name_match = re.match(last_dir_matcher, subpath)
+    if chart_name_match:
+      chart_name = chart_name_match.group(1)
+
+  chart_path = target_base
+  chart_path += "/" + (repo_name if subpath is None else repo_name + "/" + subpath)
+  result = {
+    "repo_source": repo_source,
+    "repo_name": repo_name_match.group(1).replace(".git", "") if repo_name_match else None,
+    "repo_target": target_base + "/" + repo_name,
+    "chart_path": chart_path,
+    "chart_name": chart_name
+  }
+  return result

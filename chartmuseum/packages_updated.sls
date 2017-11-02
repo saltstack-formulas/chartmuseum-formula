@@ -1,37 +1,58 @@
 {% from slspath + "/map.jinja" import config, constants with context %}
+{% from "helm/map.jinja" import config as helm_config with context %}
 
 include:
   - .data_dir_present
   - helm.repos_managed
 
+{%- set synced_repos = [] %}
 {%- for git_repo in config.get("git", {}).get("repos", []) %}
 
-{%- set coordinates = git_repo.url if git_repo.get('url') else git_repo.path %}
-{%- set parsed_repo_name = salt['chartmuseum.get_repo_name'](coordinates) %}
+#
+# identify the "coordinates" for the target chart repository, which is either
+# the git url and subpath, or just the local file path for the chart definition.
+#
+{%- set repo_path = git_repo.url if git_repo.get('url') else git_repo.path %}
+{%- set repo_coords = salt['chartmuseum.get_repo_coordinates'](
+        repo_source = repo_path, 
+        target_base = constants.git_repos_dir,
+        subpath = git_repo.get('subpath')
+    ) %}
 
+#
+# Avoid checking git state redundantly if the source repository has already 
+# been synchronized (as might be the case if multiple chart definitions are 
+# included in a single github repository)
+#
 {%- if git_repo.get('url') %}
+
 #
 # ensure the git repository is up to date with the desired branch, tag, or 
-# commit ID
+# commit ID so long as it hasn't already been synchronized
 #
-{{ parsed_repo_name }}_repository-present:
+{%- if not git_repo.url in synced_repos %}
+{{ repo_coords.repo_source }}_repository-present:
   git.latest:
     - name: {{ git_repo.url }}
-    - target: {{ constants.git_repos_dir }}/{{ parsed_repo_name }}
+    - target: {{ repo_coords.repo_target }}
     {% if 'branch' in git_repo %}
     - branch: {{ git_repo.branch }}
     {% endif %}
     {% if 'rev' in git_repo %}
     - rev: {{ git_repo.rev }}
     {% endif %}
+  
+  {%- do synced_repos.append(repo_coords.repo_source) %}
+{%- endif %} #not git_repo.url in synced_repos
 
-{%- elif 'path' in git_repo %}
-{{ parsed_repo_name }}_repository-present:
+{%- elif git_repo.get("path") %}
+{{ repo_coords.repo_source }}_repository-present:
   file.copy:
-    - name: {{ constants.git_repos_dir }}/{{ parsed_repo_name }}
-    - source: {{ git_repo.path }}
+    - name: {{ repo_coords.repo_target }}
+    - source: {{ repo_coords.repo_source }}
     - force: True
 
+  {%- do synced_repos.append(repo_coords.repo_source) %}
 {%- else %}
 "A helm chart repository is incorrectly configured in the pillar; must have `url` or `path`":
   test.fail_without_changes
@@ -39,47 +60,43 @@ include:
 
 {%- endif %}
 
-{{ parsed_repo_name }}_package_existence_checked:
+{{ repo_coords.chart_name }}_package_existence_checked:
   chartmuseum.packages_are_missing:
     - require:
-      - {{ parsed_repo_name }}_repository-present
-    - chart_path: {{ constants.git_repos_dir }}/{{ parsed_repo_name }}
+      - {{ repo_coords.repo_source }}_repository-present
+    - chart_path: {{ repo_coords.chart_path }}
     - directories: 
       - {{ constants.public_repo_dir }}
 
-{{ parsed_repo_name }}_dependencies-installed:
+{{ repo_coords.chart_name }}_dependencies-installed:
   chartmuseum.chart_dependencies_installed:
-    - chart_path: {{ constants.git_repos_dir }}/{{ parsed_repo_name }}
-    {%- if config.get('helm_home') %}
-    - helm_home: {{ config['helm_home'] }}
-    {%- endif %}
+    - chart_path: {{ repo_coords.chart_path }}
+    - helm_home: {{ helm_config.helm_home }}
     - require:
-      - {{ parsed_repo_name }}_repository-present
-      - {{ parsed_repo_name }}_package_existence_checked
+      - {{ repo_coords.repo_source }}_repository-present
+      - {{ repo_coords.chart_name }}_package_existence_checked
     {% if not config.get('force_repackage') -%}
     - onchanges:
-      - {{ parsed_repo_name }}_repository-present
-      - {{ parsed_repo_name }}_package_existence_checked
+      - {{ repo_coords.repo_source }}_repository-present
+      - {{ repo_coords.chart_name }}_package_existence_checked
     {%- endif %}
     - onlyif:
-      - test -e {{ constants.git_repos_dir }}/{{ parsed_repo_name }}/requirements.yaml
+      - test -e {{ repo_coords.chart_path }}/requirements.yaml
 
-helm-chart-packaged_{{ parsed_repo_name }}:
+helm-chart-packaged_{{ repo_coords.chart_name }}:
   chartmuseum.packaged:
-    - chart_path: {{ constants.git_repos_dir }}/{{ parsed_repo_name }}
+    - chart_path: {{ repo_coords.chart_path }}
     - destination: {{ constants.public_repo_dir }}
-    {%- if config.get('helm_home') %}
-    - helm_home: {{ config['helm_home'] }}
-    {%- endif %}
+    - helm_home: {{ helm_config.helm_home }}
     {% if not config.get('force_repackage') -%}
     - onchanges: 
-      - {{ parsed_repo_name }}_repository-present
-      - {{ parsed_repo_name }}_package_existence_checked
-      - {{ parsed_repo_name }}_dependencies-installed
+      - {{ repo_coords.repo_source }}_repository-present
+      - {{ repo_coords.chart_name }}_package_existence_checked
+      - {{ repo_coords.chart_name }}_dependencies-installed
     {% else %}
     - require:
-      - {{ parsed_repo_name }}_repository-present
-      - {{ parsed_repo_name }}_dependencies-installed
+      - {{ repo_coords.repo_source }}_repository-present
+      - {{ repo_coords.chart_name }}_dependencies-installed
     {%- endif %}
 
 {%- endfor %}
