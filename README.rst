@@ -2,6 +2,9 @@
 chartmuseum-formula
 ===================
 
+.. image:: https://travis-ci.org/saltstack-formulas/chartmuseum-formula.svg?branch=master
+    :target: https://travis-ci.org/saltstack-formulas/chartmuseum-formula
+
 A Salt formula to manage a Chartmuseum (Kubernetes Helm chart repository) 
 installation on the target minion, including keeping the served charts 
 up-to-date with a remote or local chart definition github repository.
