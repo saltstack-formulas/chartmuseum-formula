@@ -1,0 +1,14 @@
+language: ruby
+sudo: required
+cache: bundler
+services:
+  - docker
+
+install:
+  - bundle install
+
+script:
+  - KITCHEN_LOCAL_YAML=.kitchen.docker.yml bundle exec kitchen test
+
+after_script:
+  - KITCHEN_LOCAL_YAML=.kitchen.docker.yml bundle exec kitchen destroy
