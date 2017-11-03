@@ -1,10 +1,14 @@
 ---
 driver:
-  name: vagrant
-  cpus: 2
+  name: docker
+  hostname: helm.kitchen.local
+  use_sudo: false
 
 platforms:
-  - name: bento/ubuntu-16.04
+  - name: ubuntu-xenial
+    driver_config:
+      image: 'trevorj/salty-whales:xenial'
+      platform: ubuntu
 
 provisioner:
   name: salt_solo
@@ -14,12 +18,6 @@ provisioner:
   salt_version: 2016.11.8
   salt_bootstrap_options: -U -p python-git stable 2016.11.8
   dependencies:
-    - name: pip
-      repo: git
-      source: https://github.com/xetus-oss/pip-formula.git
-    - name: docker
-      repo: git
-      source: https://github.com/saltstack-formulas/docker-formula.git
     - name: helm
       repo: git
       source: https://github.com/tmeneau/salt-formula-helm.git
@@ -27,16 +25,14 @@ provisioner:
     base:
       '*':
         - helm
-        - pip.installed
-        - docker
-        - chartmuseum
+        - chartmuseum.packages_updated
 
 verifier:
   name: inspec
   sudo: true
 
 suites:
-  - name: vagrant
+  - name: docker
     provisioner:
       pillars:
         top.sls:
@@ -44,10 +40,6 @@ suites:
             '*':
               - chartmuseum
               - helm
-              - docker
-        docker.sls:
-          docker:
-            install_docker_py: true
         helm.sls:
           helm:
             tiller:
