@@ -8,7 +8,7 @@ install:
   - bundle install
 
 script:
-  - KITCHEN_LOCAL_YAML=.kitchen.docker.yml bundle exec kitchen test
+  - bundle exec rake verify
 
 after_script:
-  - KITCHEN_LOCAL_YAML=.kitchen.docker.yml bundle exec kitchen destroy
+  - bundle exec rake destroy

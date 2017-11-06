@@ -21,13 +21,13 @@ chartmuseum-running:
     - image: {{ constants.image_name }}:{{ config.image_version }}
     - hostname: {{ config.fqdn }}
     - binds:
-      - "{{ constants.public_repo_dir }}:/.charts"
+      - "{{ constants.volume_bind }}"
     - port_bindings:
       - {{ config['bind_ip'] }}:{{ config['bind_port'] }}:8080
     - cmd:
       - "--port=8080"
       - "--storage=local"
-      - "--storage-local-rootdir=/.charts"
+      - "--storage-local-rootdir={{ constants.chartmuseum_local_root_dir }}"
       {% if config.get('debug') %}
       - "--debug"
       {% endif %}

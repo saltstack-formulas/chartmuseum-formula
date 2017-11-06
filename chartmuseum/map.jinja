@@ -1,6 +1,6 @@
 {%- set constants = {
   "container_name": "chartmuseum",
-  "image_name": "chartmuseum/chartmuseum",
+  "image_name": "chartmuseum/chartmuseum"
 } %}
 
 {%- set config = salt["pillar.get"]('chartmuseum', {
@@ -30,6 +30,22 @@
 
 {%- do constants.update({
       "git_repos_dir": config.get("data_dir") + "/chart-definitions",
-      "public_repo_dir": config.get("data_dir") + "/public"
+      "public_repo_dir": config.get("data_dir") + "/public",
+      "volume_bind": config.get("data_dir") + "/public:" + "/.charts",
+      "chartmuseum_local_root_dir": "/.charts"
     })
 %}
+
+{%- if config.get("data_volume") and config.data_volume.get("name") %}
+{#
+    Since Salt's docker states don't support mounting a specific path within
+    a Docker volume, update the chartmuseum_local_root_dir parameter to point
+    to the public directory (rather than just mounting the public directory of
+    the docker volume)
+#}
+{%- do constants.update({ 
+      "volume_bind": config.data_volume.get('name') + ":/.charts",
+      "chartmuseum_local_root_dir": "/.charts/public"
+    }) 
+%}
+{%- endif %}

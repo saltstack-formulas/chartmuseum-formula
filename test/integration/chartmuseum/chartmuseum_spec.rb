@@ -16,8 +16,25 @@ end
 control 'Chartmuseum service' do
   title 'Verify Chartmuseum service'
   desc 'Ensures Chartmuseum service is accessible'
-  
-  http_result = http('http://0.0.0.0/index.yaml', enable_remote_worker: true)
+
+  #
+  # Retrieve the IP for the docker host, since Chartmuseum will be bound and
+  # exposed on the docker host. For example:
+  # 
+  # docker host: 172.17.0.1
+  # Kitchen container: 172.17.0.2
+  # CHartmuseum container: 172.17.0.3
+  # 
+  # Chartmuseum will be bound and exposed on the docker host (172.17.0.1), not 
+  # the Kitchen container.
+  #
+  def get_docker_host_ip()
+    cmd_result = command("docker network inspect --format='{{range .IPAM.Config}}{{.Gateway}}{{end}}' bridge")
+    return cmd_result.stdout.strip()
+  end
+
+  host_ip = get_docker_host_ip()
+  http_result = http("http://#{host_ip}/index.yaml", enable_remote_worker: true)
   
   describe http_result do
     its('status') { should cmp 200 }

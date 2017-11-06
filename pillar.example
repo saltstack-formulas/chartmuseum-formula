@@ -12,6 +12,39 @@ chartmuseum:
   # bind_port: 80
 
   #
+  # The path in the docker host to which to mount the Chartmuseum's data
+  #
+  # data_dir: /datavols/helm/chart-repo
+
+  #
+  # Configurations for an optional data volume to persist the Chartmuseum 
+  # data beyond the target minion, including:
+  # 
+  # * a mounted share (such as an AWS EBS volume); or
+  # * an existing Docker volume
+  #
+  # data_volume:
+      #
+      # Optional name of the docker volume to which the Chartmuseum data should 
+      # be persisted. 
+      #
+      # name: chartmuseum-data
+      
+      #
+      # Optional device name to specify. If specified, will ensure the data 
+      # volume with the specified device name is formatted and mounted on the 
+      # target minion in conjunction with the chartmuseum:data_volume:fstype
+      # parameter
+      #
+      # device:
+       
+      #
+      # The file system type of the data volume to mount. Will be ignored 
+      # unless the chartmuseum:data_volume:device pillar value is specified.
+      #
+      # fstype: 
+
+  #
   # The FQDN to apply to the docker container
   #
   fqdn: helm-chart-repo.dev.xetus.com

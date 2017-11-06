@@ -1,10 +1,33 @@
 ---
 driver:
-  name: vagrant
-  cpus: 2
+  name: docker
+  hostname: helm.kitchen.local
+  use_sudo: false
 
 platforms:
-  - name: bento/ubuntu-16.04
+  - name: ubuntu-xenial
+    driver_config:
+      image: 'trevorj/salty-whales:xenial'
+      platform: ubuntu
+      privileged: true
+      volume:
+        #
+        # Mount the docker sock so that the Kitchen test container has 
+        # access to the host's docker process. Note that this does add an
+        # element of complication since docker is being run using the host's
+        # docker server, not the kitchen container's docker server.
+        # 
+        # For example, and containers created will be *siblings* of the 
+        # Kitchen test container, not children; any volumes mounted to the
+        # created container will be mounted *from the host*, not the Kitchen
+        # container.
+        # 
+        # Hence using the data volume, which can be mounted at the appropriate
+        # path(s) for both the Kitchen container, and any containers created
+        # by the formula under test.
+        #
+        - /var/run/docker.sock:/var/run/docker.sock
+        - chartmuseumformula_data:/datavols/helm/chart-repo
 
 provisioner:
   name: salt_solo
@@ -36,7 +59,7 @@ verifier:
   sudo: true
 
 suites:
-  - name: vagrant
+  - name: chartmuseum
     provisioner:
       pillars:
         top.sls:
@@ -58,6 +81,8 @@ suites:
           chartmuseum:
             bind_ip: 0.0.0.0
             public_url: http://0.0.0.0
+            data_volume: 
+              name: chartmuseumformula_data
             git:
               repos:
                 - url: https://github.com/kubernetes/charts.git

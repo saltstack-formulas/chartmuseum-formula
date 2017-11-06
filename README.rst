@@ -129,24 +129,18 @@ Testing
 Running the tests requires a couple local pre-requisites:
 
 * a recent version of Ruby (with Bundler installed);
-* Vagrant installed
+* Docker installed (including docker-compose)
 
 Running the tests:
 
 .. code-block:: shell
 
   bundle
-  kitchen test
+  bundle exec rake verify
 
 Be sure to destroy the test VMs when you're done testing to liberate your local
 development resources:
 
 .. code-block:: shell
 
-  kitchen destroy
-
-Development
-===========
-
-The fastest workflow for development is to use ``kitchen converge`` when you've
-modified the formula, and ``kitchen verify`` when you've modified the specs.
+  bundle exec rake destroy

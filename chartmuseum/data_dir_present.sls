@@ -12,11 +12,11 @@ chartmuseum-data-dir-present:
 # If a datavolume was specified, mount the volume and format
 # the device if necessary
 #
-{% if config['data_volume'] %}
+{% if config.get("data_volume") and config.data_volume.get("device") %}
 chartmuseum-data-volume-formatted:
   blockdev.formatted:
-    - name: {{ config['data_volume'].device }}
-    - fs_type: {{ config['data_volume'].fstype }}
+    - name: {{ config.data_volume.device }}
+    - fs_type: {{ config.data_volume.fstype }}
 
 chartmuseum-data-volume-mounted:
   mount.mounted:
@@ -24,8 +24,8 @@ chartmuseum-data-volume-mounted:
       - file: chartmuseum-data-dir-present
       - blockdev: chartmuseum-data-volume-formatted
     - name: {{ config['data_dir'] }}
-    - device: {{ config['data_volume'].device }}
-    - fstype: {{ config['data_volume'].fstype }}
+    - device: {{ config.data_volume.device }}
+    - fstype: {{ config.data_volume.fstype }}
     - persist: False
 {% endif %}
 
